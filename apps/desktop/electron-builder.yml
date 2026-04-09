@@ -18,11 +18,9 @@ asarUnpack:
 
 mac:
   category: public.app-category.developer-tools
-  hardenedRuntime: true
+  hardenedRuntime: false
   gatekeeperAssess: false
-  entitlements: resources/entitlements.mac.plist
-  entitlementsInherit: resources/entitlements.mac.inherit.plist
-  notarize: true
+  notarize: false
   target:
     - target: dmg
       arch: arm64
@@ -41,6 +39,32 @@ dmg:
   window:
     width: 540
     height: 380
+
+win:
+  target:
+    - target: nsis
+      arch: x64
+    - target: portable
+      arch: x64
+  artifactName: "${productName}-${version}-${arch}-setup.${ext}"
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+
+portable:
+  artifactName: "${productName}-${version}-${arch}-portable.${ext}"
+
+linux:
+  target:
+    - target: AppImage
+      arch: x64
+    - target: deb
+      arch: x64
+  artifactName: "${productName}-${version}-${arch}.${ext}"
+  category: Development
 
 publish:
   provider: github
