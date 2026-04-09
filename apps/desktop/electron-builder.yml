@@ -41,6 +41,7 @@ dmg:
     height: 380
 
 win:
+  icon: resources/icon.ico
   target:
     - target: nsis
       arch: x64
@@ -58,6 +59,7 @@ portable:
   artifactName: "${productName}-${version}-${arch}-portable.${ext}"
 
 linux:
+  icon: resources/icon.png
   target:
     - target: AppImage
       arch: x64

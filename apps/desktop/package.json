@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "author": "Hyperspace Technologies <reactor@hyperspace.ng>",
   "license": "MIT",
-  "description": "Codex-style desktop shell for pi",
+  "description": "Codex-style desktop shell for AI coding agents",
+  "homepage": "https://github.com/DrOlu/reactor-gui",
   "main": "out/main/main.js",
   "scripts": {
     "build:deps": "pnpm --dir ../.. --filter @pi-gui/session-driver --filter @pi-gui/pi-sdk-driver --filter @pi-gui/catalogs run build",
