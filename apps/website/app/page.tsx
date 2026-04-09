@@ -6,7 +6,7 @@ import {
   SITE_URL,
 } from "./site";
 
-const GITHUB_URL = "https://github.com/minghinmatthewlam/pi-gui";
+const GITHUB_URL = "https://github.com/DrOlu/reactor-gui";
 const PI_MONO_URL = "https://github.com/mariozechner/pi";
 
 const softwareApplicationJsonLd = {
@@ -86,7 +86,7 @@ export default function Page() {
       {/* ===== Nav ===== */}
       <nav className="nav">
         <div className="nav-inner">
-          <span className="nav-logo">pi-gui</span>
+          <span className="nav-logo">reactor-gui</span>
           <div className="nav-links">
             <a href="#features" className="nav-link">
               Features
@@ -129,17 +129,7 @@ export default function Page() {
               AI coding agents
             </h1>
             <p className="hero-subtitle">
-              pi-gui is a Codex-style macOS desktop app for the{" "}
-              <a
-                href={PI_MONO_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-link"
-              >
-                pi coding agent
-              </a>
-              . Manage workspaces, run sessions, and review agent work — all
-              from a native interface.
+              reactor-gui is a Codex-style macOS desktop app for AI coding agents. Manage workspaces, run sessions, and review agent work — all from a native interface.
             </p>
             <p className="hero-note">
               {HERO_BETA_NOTE}
@@ -233,7 +223,7 @@ export default function Page() {
                 <div className="feature-icon" aria-hidden="true"><WrenchIcon /></div>
                 <h3>Skills &amp; slash commands</h3>
                 <p>
-                  Extend pi-gui with workspace-specific skills and slash
+                  Extend reactor-gui with workspace-specific skills and slash
                   commands for model switching, thinking levels, settings, and
                   custom workflows.
                 </p>
@@ -305,7 +295,7 @@ export default function Page() {
                 {"\n"}
                 <span className="code-command">git clone</span>{" "}
                 {GITHUB_URL}.git{"\n"}
-                <span className="code-command">cd</span> pi-gui{"\n\n"}
+                <span className="code-command">cd</span> reactor-gui{"\n\n"}
                 <span className="code-comment">
                   # Install dependencies and run
                 </span>
@@ -332,7 +322,7 @@ export default function Page() {
       {/* ===== Footer ===== */}
       <footer className="footer">
         <div className="footer-inner">
-          <span>pi-gui</span>
+          <span>reactor-gui</span>
           <span className="footer-sep">&middot;</span>
           <span>MIT License</span>
           <span className="footer-sep">&middot;</span>

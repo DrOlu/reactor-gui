@@ -1,6 +1,6 @@
-appId: com.pi-gui.desktop
-productName: pi-gui
-copyright: Copyright 2026 Matthew Lam
+appId: com.reactor-gui.desktop
+productName: reactor-gui
+copyright: Copyright 2026 Hyperspace Technologies
 electronVersion: 34.5.8
 
 directories:
@@ -44,5 +44,5 @@ dmg:
 
 publish:
   provider: github
-  owner: minghinmatthewlam
-  repo: pi-gui
+  owner: DrOlu
+  repo: reactor-gui

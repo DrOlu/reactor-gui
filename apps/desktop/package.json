@@ -2,7 +2,7 @@
   "name": "@pi-gui/desktop",
   "private": true,
   "version": "0.1.0",
-  "author": "Matthew Lam",
+  "author": "Hyperspace Technologies <reactor@hyperspace.ng>",
   "license": "MIT",
   "description": "Codex-style desktop shell for pi",
   "main": "out/main/main.js",

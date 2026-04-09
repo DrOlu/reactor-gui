@@ -1,10 +1,10 @@
-# pi-gui
+# reactor-gui
 
-Electron desktop shell for `pi` sessions.
+Electron desktop shell for AI coding agents.
 
 This repo packages a desktop UI around `@mariozechner/pi-coding-agent`. It is not a standalone coding agent runtime. The app depends on the upstream `pi` package for session management, model/auth setup, and agent execution.
 
-![pi-gui demo](./docs/readme/demo.gif)
+![reactor-gui demo](./docs/readme/demo.gif)
 
 ## Status
 
@@ -15,17 +15,17 @@ This repo packages a desktop UI around `@mariozechner/pi-coding-agent`. It is no
 
 ### From GitHub Releases
 
-Download the latest `.dmg` from [Releases](https://github.com/minghinmatthewlam/pi-gui/releases).
+Download the latest `.dmg` from [Releases](https://github.com/DrOlu/reactor-gui/releases).
 
 Signed and notarized beta releases are the intended install path. Older unsigned artifacts may still require the macOS right-click > Open workaround.
 
 ### With Homebrew
 
-Homebrew installation will be published from [`minghinmatthewlam/homebrew-tap`](https://github.com/minghinmatthewlam/homebrew-tap) once the first signed release artifacts are available.
+Homebrew installation will be published once the first signed release artifacts are available.
 
 ```bash
-brew tap minghinmatthewlam/tap
-brew install --cask pi-gui
+brew tap hyperspace-technologies/tap
+brew install --cask reactor-gui
 ```
 
 ### From Source
@@ -90,7 +90,7 @@ Release automation expects these GitHub Actions secrets for signed/notarized mac
 Regenerate the README demo assets:
 
 ```bash
-pnpm --filter @pi-gui/desktop demo:readme
+pnpm --filter @reactor-gui/desktop demo:readme
 ```
 
 ## Repository Layout

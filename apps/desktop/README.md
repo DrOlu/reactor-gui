@@ -1,6 +1,6 @@
 # Desktop App
 
-Codex-style Electron shell for `pi`, with Playwright E2E coverage organized by test lane.
+Codex-style Electron shell for AI coding agents, with Playwright E2E coverage organized by test lane.
 
 macOS is the supported desktop target today. Keep generic repo checks on Linux if useful, but treat macOS as the source of truth for desktop CI and product verification.
 
@@ -15,13 +15,13 @@ pnpm install
 Build the desktop app:
 
 ```bash
-pnpm --filter @pi-gui/desktop build
+pnpm --filter @reactor-gui/desktop build
 ```
 
 Run the app in development:
 
 ```bash
-pnpm --filter @pi-gui/desktop dev
+pnpm --filter @reactor-gui/desktop dev
 ```
 
 `dev` now runs through `electron-vite`, so renderer edits hot-update in place and Electron `main` / `preload` changes trigger the appropriate reload or restart behavior automatically. The desktop dev launcher also rebuilds the shared workspace packages up front and keeps them in watch mode so Node-side package changes can be picked up without manual rebuilds.
@@ -42,45 +42,45 @@ Use the smallest lane that matches the changed surface.
   Background-friendly Electron UI coverage. This is the default lane for renderer, sidebar, composer, persistence, settings, skills, and worktree UI behavior.
 
   ```bash
-  pnpm --filter @pi-gui/desktop run test:e2e
-  pnpm --filter @pi-gui/desktop run test:e2e:core
+  pnpm --filter @reactor-gui/desktop run test:e2e
+  pnpm --filter @reactor-gui/desktop run test:e2e:core
   ```
 
 - `live`
   Real runtime/provider coverage. Use this when the change depends on an actual run, transcript item, tool call, or background notification.
 
   ```bash
-  pnpm --filter @pi-gui/desktop run test:e2e:live
+  pnpm --filter @reactor-gui/desktop run test:e2e:live
   ```
 
 - `native`
   macOS OS-surface coverage such as folder pickers, image pickers, and real clipboard paste. This lane is foreground-only and can take focus.
 
   ```bash
-  pnpm --filter @pi-gui/desktop run test:e2e:native
+  pnpm --filter @reactor-gui/desktop run test:e2e:native
   ```
 
 - `production`
   Opt-in higher-fidelity smokes that stay out of the default fast lanes. Use these for real-auth `live` checks, packaged `.app` launch, and real macOS open-panel coverage.
 
   ```bash
-  pnpm --filter @pi-gui/desktop run test:prod:real-auth-contract
-  pnpm --filter @pi-gui/desktop run test:prod:packaged-smoke
-  pnpm --filter @pi-gui/desktop run test:prod:applications-relaunch
-  pnpm --filter @pi-gui/desktop run test:prod:release-zip-smoke
-  pnpm --filter @pi-gui/desktop run test:prod:open-folder-real
+  pnpm --filter @reactor-gui/desktop run test:prod:real-auth-contract
+  pnpm --filter @reactor-gui/desktop run test:prod:packaged-smoke
+  pnpm --filter @reactor-gui/desktop run test:prod:applications-relaunch
+  pnpm --filter @reactor-gui/desktop run test:prod:release-zip-smoke
+  pnpm --filter @reactor-gui/desktop run test:prod:open-folder-real
   ```
 
 Run all desktop lanes:
 
 ```bash
-pnpm --filter @pi-gui/desktop run test:e2e:all
+pnpm --filter @reactor-gui/desktop run test:e2e:all
 ```
 
 For mac-first CI, use:
 
 ```bash
-pnpm --filter @pi-gui/desktop run test:e2e:ci:mac
+pnpm --filter @reactor-gui/desktop run test:e2e:ci:mac
 ```
 
 ## Focus And Foreground Rules
@@ -98,33 +98,33 @@ Rerun the matching lane before closing for `core` and `live`.
 For `native`, rerun the targeted native spec by default and expand to `test:e2e:native` only when the change touches shared native helpers, multiple native specs, or lane-wide native behavior.
 
 ```bash
-pnpm --filter @pi-gui/desktop run test:core:worktrees
-pnpm --filter @pi-gui/desktop run test:core:persistence
-pnpm --filter @pi-gui/desktop run test:live:tool-calls
-pnpm --filter @pi-gui/desktop run test:native:paste
-pnpm --filter @pi-gui/desktop run test:native:open-folder
-pnpm --filter @pi-gui/desktop run test:native:attach-image
-pnpm --filter @pi-gui/desktop run test:prod:real-auth-contract
-pnpm --filter @pi-gui/desktop run test:prod:packaged-smoke
-pnpm --filter @pi-gui/desktop run test:prod:applications-relaunch
-pnpm --filter @pi-gui/desktop run test:prod:release-zip-smoke
-pnpm --filter @pi-gui/desktop run test:prod:open-folder-real
+pnpm --filter @reactor-gui/desktop run test:core:worktrees
+pnpm --filter @reactor-gui/desktop run test:core:persistence
+pnpm --filter @reactor-gui/desktop run test:live:tool-calls
+pnpm --filter @reactor-gui/desktop run test:native:paste
+pnpm --filter @reactor-gui/desktop run test:native:open-folder
+pnpm --filter @reactor-gui/desktop run test:native:attach-image
+pnpm --filter @reactor-gui/desktop run test:prod:real-auth-contract
+pnpm --filter @reactor-gui/desktop run test:prod:packaged-smoke
+pnpm --filter @reactor-gui/desktop run test:prod:applications-relaunch
+pnpm --filter @reactor-gui/desktop run test:prod:release-zip-smoke
+pnpm --filter @reactor-gui/desktop run test:prod:open-folder-real
 ```
 
 For real-auth `live` specs, opt in explicitly:
 
 ```bash
 PI_APP_REAL_AUTH=1 PI_APP_REAL_AUTH_SOURCE_DIR=/absolute/path/to/agent \
-  pnpm --filter @pi-gui/desktop run test:e2e:runner -- apps/desktop/tests/live/submit-run.spec.ts
+  pnpm --filter @reactor-gui/desktop run test:e2e:runner -- apps/desktop/tests/live/submit-run.spec.ts
 
 PI_APP_REAL_AUTH=1 PI_APP_REAL_AUTH_SOURCE_DIR=/absolute/path/to/agent \
-  pnpm --filter @pi-gui/desktop run test:e2e:runner -- apps/desktop/tests/live/tool-calls.spec.ts
+  pnpm --filter @reactor-gui/desktop run test:e2e:runner -- apps/desktop/tests/live/tool-calls.spec.ts
 ```
 
 For dev-loop verification, use:
 
 ```bash
-pnpm --filter @pi-gui/desktop run test:dev:reload
+pnpm --filter @reactor-gui/desktop run test:dev:reload
 ```
 
 That spec launches the app in development mode, edits isolated probe modules for renderer/Electron/shared-package wiring, and proves the running window picks up the changes.

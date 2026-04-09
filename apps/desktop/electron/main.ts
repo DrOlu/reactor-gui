@@ -232,7 +232,7 @@ function installApplicationMenu(): void {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
-app.setName("pi");
+app.setName("reactor");
 
 app.whenReady().then(async () => {
   const userDataDir = process.env.PI_APP_USER_DATA_DIR?.trim() || app.getPath("userData");
