@@ -4,12 +4,14 @@ import type { RuntimeCommandRecord, RuntimeSnapshot } from "@pi-gui/session-driv
 import type {
   AppView,
   ComposerAttachment,
+  ComposerDraftSyncSource,
   DesktopAppState,
   ExtensionCommandCompatibilityRecord,
+  QueuedComposerMessage,
   TranscriptMessage,
   WorkspaceSessionTarget,
 } from "../src/desktop-state";
-import type { PendingAutoTitle, SessionStateMap } from "./session-state-map";
+import type { PendingAutoTitle, QueuedComposerEditState, SessionStateMap } from "./session-state-map";
 import type { GitWorktreeManager } from "./worktree-manager";
 import type { JsonFileStore } from "./json-file-store";
 import type { PendingRuntimeCommandExecution } from "./extension-command-compatibility";
@@ -64,6 +66,13 @@ export interface AppStoreInternals {
   setPendingAutoTitle(sessionRef: SessionRef, pending: PendingAutoTitle): void;
   getPendingAutoTitle(sessionRef: SessionRef): PendingAutoTitle | undefined;
   clearPendingAutoTitle(sessionRef: SessionRef): void;
+  updateQueuedComposerMessages(
+    sessionRef: SessionRef,
+    queuedMessages: readonly import("@pi-gui/session-driver").SessionQueuedMessage[] | undefined,
+  ): void;
+  getQueuedComposerMessages(sessionRef: SessionRef): readonly QueuedComposerMessage[];
+  setQueuedComposerEditState(sessionRef: SessionRef, editState: QueuedComposerEditState | undefined): void;
+  getQueuedComposerEditState(sessionRef: SessionRef): QueuedComposerEditState | undefined;
   reloadTranscriptFromDriver(sessionRef: SessionRef): Promise<void>;
   publishSelectedTranscript(): void;
   publishSelectedTranscriptFor(sessionRef: SessionRef): void;
@@ -74,6 +83,7 @@ export interface RefreshStateOptions {
   readonly selectedWorkspaceId?: string;
   readonly selectedSessionId?: string;
   readonly composerDraft?: string;
+  readonly composerDraftSyncSource?: ComposerDraftSyncSource;
   readonly clearLastError?: boolean;
   readonly refreshWorktrees?: boolean;
   readonly activeView?: AppView;

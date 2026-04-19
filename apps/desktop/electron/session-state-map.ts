@@ -3,6 +3,7 @@ import { createEmptyExtensionUiState as createBaseExtensionUiState, type Extensi
 import type { RuntimeCommandRecord } from "@pi-gui/session-driver/runtime-types";
 import type {
   ComposerAttachment,
+  QueuedComposerMessage,
   SessionExtensionDialogRecord,
   SessionExtensionUiStateRecord,
   TranscriptMessage,
@@ -18,6 +19,12 @@ export interface PendingAutoTitle {
   readonly cancel: () => void;
 }
 
+export interface QueuedComposerEditState {
+  readonly messageId: string;
+  readonly restoreDraft: string;
+  readonly restoreAttachments: readonly ComposerAttachment[];
+}
+
 /**
  * Consolidates all per-session Maps (and one Set) that DesktopAppStore
  * maintains for runtime session state.  Having them in a single class
@@ -28,6 +35,8 @@ export class SessionStateMap {
   readonly transcriptCache = new Map<string, TranscriptMessage[]>();
   readonly composerDraftsBySession = new Map<string, string>();
   readonly composerAttachmentsBySession = new Map<string, ComposerAttachment[]>();
+  readonly queuedComposerMessagesBySession = new Map<string, QueuedComposerMessage[]>();
+  readonly queuedComposerEditsBySession = new Map<string, QueuedComposerEditState>();
   readonly sessionConfigBySession = new Map<string, SessionConfig>();
   readonly lastViewedAtBySession = new Map<string, string>();
   readonly sessionErrorsBySession = new Map<string, string>();
@@ -64,6 +73,8 @@ export class SessionStateMap {
     this.activeWorkingActivityBySession.delete(key);
     this.composerDraftsBySession.delete(key);
     this.composerAttachmentsBySession.delete(key);
+    this.queuedComposerMessagesBySession.delete(key);
+    this.queuedComposerEditsBySession.delete(key);
     this.sessionConfigBySession.delete(key);
     this.lastViewedAtBySession.delete(key);
     this.sessionErrorsBySession.delete(key);

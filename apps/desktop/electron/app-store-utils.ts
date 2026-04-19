@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
 import type { SessionCatalogEntry, WorkspaceCatalogEntry, WorktreeCatalogEntry } from "@pi-gui/catalogs";
 import { sessionKey } from "@pi-gui/pi-sdk-driver";
-import type { SessionAttachment, SessionConfig, SessionRef } from "@pi-gui/session-driver";
+import type { SessionAttachment, SessionConfig, SessionQueuedMessage, SessionRef } from "@pi-gui/session-driver";
 import type {
   ComposerAttachment,
+  QueuedComposerMessage,
   SessionRecord,
   TranscriptMessage,
   WorktreeRecord,
@@ -311,6 +312,45 @@ export function toSessionAttachments(
   );
 }
 
+export function toSessionQueuedMessages(
+  messages: readonly QueuedComposerMessage[],
+): SessionQueuedMessage[] {
+  return messages.map((message) => ({
+    id: message.id,
+    mode: message.mode,
+    text: message.text,
+    ...(message.attachments.length > 0
+      ? {
+          attachments: toSessionAttachments(message.attachments),
+        }
+      : {}),
+    createdAt: message.createdAt,
+    updatedAt: message.updatedAt,
+  }));
+}
+
+export function mergeQueuedComposerMessages(
+  previous: readonly QueuedComposerMessage[] | undefined,
+  next: readonly SessionQueuedMessage[] | undefined,
+): QueuedComposerMessage[] {
+  if (!next || next.length === 0) {
+    return [];
+  }
+
+  const previousById = new Map((previous ?? []).map((message) => [message.id, message]));
+  return next.map((message) => {
+    const existing = previousById.get(message.id);
+    return {
+      id: message.id,
+      mode: message.mode,
+      text: message.text,
+      attachments: mergeQueuedComposerAttachments(existing?.attachments, message.attachments, message.id),
+      createdAt: message.createdAt,
+      updatedAt: message.updatedAt,
+    };
+  });
+}
+
 export function toTranscriptAttachments(
   attachments: readonly ComposerAttachment[],
 ): NonNullable<Extract<TranscriptMessage, { kind: "message" }>["attachments"]> {
@@ -345,6 +385,52 @@ function toFileAttachmentPayload({
     name,
     ...(sizeBytes !== undefined ? { sizeBytes } : {}),
   };
+}
+
+function mergeQueuedComposerAttachments(
+  previous: readonly ComposerAttachment[] | undefined,
+  next: readonly SessionAttachment[] | undefined,
+  messageId: string,
+): ComposerAttachment[] {
+  if (!next || next.length === 0) {
+    return [];
+  }
+
+  return next.map((attachment, index) => {
+    const existing = previous?.[index];
+    if (existing && existing.kind === attachment.kind && existing.name === attachment.name && existing.mimeType === attachment.mimeType) {
+      if (existing.kind === "image" && attachment.kind === "image" && existing.data === attachment.data) {
+        return existing;
+      }
+      if (
+        existing.kind === "file" &&
+        attachment.kind === "file" &&
+        existing.fsPath === attachment.fsPath &&
+        existing.sizeBytes === attachment.sizeBytes
+      ) {
+        return existing;
+      }
+    }
+
+    if (attachment.kind === "image") {
+      return {
+        id: `${messageId}:image:${index}:${randomUUID()}`,
+        kind: "image",
+        name: attachment.name ?? `Image ${index + 1}`,
+        mimeType: attachment.mimeType,
+        data: attachment.data,
+      } satisfies ComposerAttachment;
+    }
+
+    return {
+      id: `${messageId}:file:${index}:${randomUUID()}`,
+      kind: "file",
+      name: attachment.name,
+      mimeType: attachment.mimeType,
+      fsPath: attachment.fsPath,
+      ...(attachment.sizeBytes !== undefined ? { sizeBytes: attachment.sizeBytes } : {}),
+    } satisfies ComposerAttachment;
+  });
 }
 
 function normalizeComposerAttachment(value: Record<string, unknown>): ComposerAttachment | null {

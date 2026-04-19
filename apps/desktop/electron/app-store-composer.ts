@@ -1,6 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { sessionKey } from "@pi-gui/pi-sdk-driver";
 import type { SessionConfig, SessionRef } from "@pi-gui/session-driver";
-import type { ComposerAttachment, DesktopAppState, WorkspaceSessionTarget } from "../src/desktop-state";
+import type { ComposerAttachment, DesktopAppState, QueuedComposerMessage, WorkspaceSessionTarget } from "../src/desktop-state";
 import { toSessionRef } from "./app-store-utils";
 import {
   formatSessionConfigStatus,
@@ -15,6 +16,7 @@ import {
   makeActivityItem,
   previewFromTranscript,
   toSessionAttachments,
+  toSessionQueuedMessages,
   toTranscriptAttachments,
 } from "./app-store-utils";
 import type { AppStoreInternals } from "./app-store-internals";
@@ -38,10 +40,12 @@ export async function updateComposerDraft(
   store.state = {
     ...store.state,
     composerDraft,
+    composerDraftSyncSource: "persist",
+    composerDraftSyncNonce: store.state.composerDraftSyncNonce + 1,
     lastError: undefined,
     revision: store.state.revision + 1,
   };
-  await store.persistUiState();
+  store.schedulePersistUiState();
   return store.emit();
 }
 
@@ -95,7 +99,152 @@ export async function removeComposerAttachment(
   return store.emit();
 }
 
-export async function submitComposer(store: AppStoreInternals, textInput: string): Promise<DesktopAppState> {
+export async function editQueuedComposerMessage(
+  store: AppStoreInternals,
+  messageId: string,
+  currentDraft = "",
+): Promise<DesktopAppState> {
+  await store.initialize();
+  const sessionRef = store.selectedSessionRef();
+  if (!sessionRef) {
+    return store.emit();
+  }
+
+  const key = sessionKey(sessionRef);
+  const message = store.getQueuedComposerMessages(sessionRef).find((entry) => entry.id === messageId);
+  if (!message) {
+    return store.emit();
+  }
+
+  store.setQueuedComposerEditState(sessionRef, {
+    messageId,
+    restoreDraft: currentDraft || store.sessionState.composerDraftsBySession.get(key) || "",
+    restoreAttachments: cloneComposerAttachments(store.sessionState.composerAttachmentsBySession.get(key) ?? []),
+  });
+  store.sessionState.composerDraftsBySession.set(key, message.text);
+  store.sessionState.composerAttachmentsBySession.set(key, cloneComposerAttachments(message.attachments));
+  await store.persistComposerAttachments(key, message.attachments);
+
+  return store.refreshState({
+    composerDraft: message.text,
+    composerDraftSyncSource: "queued-message-edit",
+    clearLastError: true,
+    markSelectedSessionViewed: false,
+  });
+}
+
+export async function cancelQueuedComposerEdit(
+  store: AppStoreInternals,
+): Promise<DesktopAppState> {
+  await store.initialize();
+  const sessionRef = store.selectedSessionRef();
+  if (!sessionRef) {
+    return store.emit();
+  }
+
+  const editState = store.getQueuedComposerEditState(sessionRef);
+  if (!editState) {
+    return store.emit();
+  }
+
+  const key = sessionKey(sessionRef);
+  store.setQueuedComposerEditState(sessionRef, undefined);
+  if (editState.restoreDraft) {
+    store.sessionState.composerDraftsBySession.set(key, editState.restoreDraft);
+  } else {
+    store.sessionState.composerDraftsBySession.delete(key);
+  }
+  if (editState.restoreAttachments.length > 0) {
+    store.sessionState.composerAttachmentsBySession.set(key, cloneComposerAttachments(editState.restoreAttachments));
+  } else {
+    store.sessionState.composerAttachmentsBySession.delete(key);
+  }
+  await store.persistComposerAttachments(key, editState.restoreAttachments);
+
+  return store.refreshState({
+    composerDraft: editState.restoreDraft,
+    composerDraftSyncSource: "queued-message-edit",
+    clearLastError: true,
+    markSelectedSessionViewed: false,
+  });
+}
+
+export async function removeQueuedComposerMessage(
+  store: AppStoreInternals,
+  messageId: string,
+): Promise<DesktopAppState> {
+  await store.initialize();
+  const sessionRef = store.selectedSessionRef();
+  if (!sessionRef) {
+    return store.emit();
+  }
+
+  const current = store.getQueuedComposerMessages(sessionRef);
+  const next = current.filter((message) => message.id !== messageId);
+  const editState = store.getQueuedComposerEditState(sessionRef);
+  const key = sessionKey(sessionRef);
+
+  if (editState?.messageId === messageId) {
+    store.setQueuedComposerEditState(sessionRef, undefined);
+    if (editState.restoreDraft) {
+      store.sessionState.composerDraftsBySession.set(key, editState.restoreDraft);
+    } else {
+      store.sessionState.composerDraftsBySession.delete(key);
+    }
+    if (editState.restoreAttachments.length > 0) {
+      store.sessionState.composerAttachmentsBySession.set(key, cloneComposerAttachments(editState.restoreAttachments));
+    } else {
+      store.sessionState.composerAttachmentsBySession.delete(key);
+    }
+    await store.persistComposerAttachments(key, editState.restoreAttachments);
+  }
+
+  await store.driver.replaceQueuedMessages(sessionRef, toSessionQueuedMessages(next));
+  return store.refreshState({
+    ...(editState?.messageId === messageId
+      ? {
+          composerDraft: editState.restoreDraft,
+          composerDraftSyncSource: "queued-message-edit" as const,
+        }
+      : {}),
+    clearLastError: true,
+    markSelectedSessionViewed: false,
+  });
+}
+
+export async function steerQueuedComposerMessage(
+  store: AppStoreInternals,
+  messageId: string,
+): Promise<DesktopAppState> {
+  await store.initialize();
+  const sessionRef = store.selectedSessionRef();
+  if (!sessionRef) {
+    return store.emit();
+  }
+
+  const next = store.getQueuedComposerMessages(sessionRef).map((message) =>
+    message.id === messageId && message.mode !== "steer"
+      ? {
+          ...message,
+          mode: "steer" as const,
+          updatedAt: new Date().toISOString(),
+        }
+      : message,
+  );
+  await store.driver.replaceQueuedMessages(sessionRef, toSessionQueuedMessages(next));
+  return store.refreshState({
+    clearLastError: true,
+    markSelectedSessionViewed: false,
+  });
+}
+
+export async function submitComposer(
+  store: AppStoreInternals,
+  textInput: string,
+  options: {
+    readonly deliverAs?: "steer" | "followUp";
+  } = {},
+): Promise<DesktopAppState> {
   await store.initialize();
   const text = textInput.trim();
   const sessionRef = store.selectedSessionRef();
@@ -124,6 +273,9 @@ export async function submitComposer(store: AppStoreInternals, textInput: string
   }
 
   const key = sessionKey(sessionRef);
+  const selectedSession = store.sessionFromState(sessionRef);
+  const isRunning = selectedSession?.status === "running";
+  const editingState = store.getQueuedComposerEditState(sessionRef);
   try {
     if (resolvedRuntimeSlashCommand) {
       const learnedCompatibility = store.getLearnedRuntimeCommandCompatibility(sessionRef.workspaceId, resolvedRuntimeSlashCommand);
@@ -136,6 +288,8 @@ export async function submitComposer(store: AppStoreInternals, textInput: string
         store.state = {
           ...store.state,
           composerDraft: textInput,
+          composerDraftSyncSource: "command",
+          composerDraftSyncNonce: store.state.composerDraftSyncNonce + 1,
           composerAttachments: cloneComposerAttachments(attachments),
           revision: store.state.revision + 1,
         };
@@ -144,6 +298,40 @@ export async function submitComposer(store: AppStoreInternals, textInput: string
 
       store.beginRuntimeCommandExecution(sessionRef, resolvedRuntimeSlashCommand);
     }
+
+    if (isRunning && !resolvedRuntimeSlashCommand) {
+      const deliverAs = options.deliverAs ?? "followUp";
+      const nextQueuedMessages = editingState
+        ? replaceQueuedComposerMessage(
+            store.getQueuedComposerMessages(sessionRef),
+            editingState.messageId,
+            buildQueuedComposerMessage({
+              existing: store.getQueuedComposerMessages(sessionRef).find((message) => message.id === editingState.messageId),
+              text,
+              attachments,
+              mode: deliverAs,
+            }),
+          )
+        : [
+            ...store.getQueuedComposerMessages(sessionRef),
+            buildQueuedComposerMessage({
+              text,
+              attachments,
+              mode: deliverAs,
+            }),
+          ];
+
+      store.sessionState.composerDraftsBySession.delete(key);
+      store.sessionState.composerAttachmentsBySession.delete(key);
+      store.setQueuedComposerEditState(sessionRef, undefined);
+      await store.persistComposerAttachments(key, []);
+      await store.driver.replaceQueuedMessages(sessionRef, toSessionQueuedMessages(nextQueuedMessages));
+      return store.refreshState({
+        clearLastError: true,
+        markSelectedSessionViewed: false,
+      });
+    }
+
     await sendMessageToSession(store, sessionRef, text, attachments);
     const runtimeCommandOutcome = resolvedRuntimeSlashCommand
       ? store.finishRuntimeCommandExecution(sessionRef)
@@ -165,6 +353,9 @@ export async function submitComposer(store: AppStoreInternals, textInput: string
     if (attachments.length > 0) {
       store.sessionState.composerAttachmentsBySession.set(key, cloneComposerAttachments(attachments));
       await store.persistComposerAttachments(key, attachments);
+    }
+    if (editingState) {
+      store.setQueuedComposerEditState(sessionRef, editingState);
     }
     return store.withError(error);
   }
@@ -268,6 +459,31 @@ export async function sendMessageToSession(
     }
     throw error;
   }
+}
+
+function buildQueuedComposerMessage(options: {
+  readonly text: string;
+  readonly attachments: readonly ComposerAttachment[];
+  readonly mode: "steer" | "followUp";
+  readonly existing?: QueuedComposerMessage;
+}): QueuedComposerMessage {
+  const timestamp = new Date().toISOString();
+  return {
+    id: options.existing?.id ?? randomUUID(),
+    text: options.text,
+    mode: options.mode,
+    attachments: cloneComposerAttachments(options.attachments),
+    createdAt: options.existing?.createdAt ?? timestamp,
+    updatedAt: timestamp,
+  };
+}
+
+function replaceQueuedComposerMessage(
+  messages: readonly QueuedComposerMessage[],
+  messageId: string,
+  replacement: QueuedComposerMessage,
+): QueuedComposerMessage[] {
+  return messages.map((message) => (message.id === messageId ? replacement : message));
 }
 
 /** Eagerly merge config fields so finishComposerCommand sees them before the async sessionUpdated event arrives. */
@@ -388,6 +604,8 @@ function finishComposerCommand(
         : workspace,
     ),
     composerDraft: "",
+    composerDraftSyncSource: "command",
+    composerDraftSyncNonce: store.state.composerDraftSyncNonce + 1,
     composerAttachments: [],
     lastError: undefined,
     revision: store.state.revision + 1,

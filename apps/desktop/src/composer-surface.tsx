@@ -9,6 +9,7 @@ import type {
 import { hasFilesInDataTransfer } from "./composer-attachments";
 import { ExtensionDock, type ExtensionDockModel } from "./extension-session-ui";
 import { FileIcon, ModelIcon, ReasoningIcon, SettingsIcon, SkillIcon, SparkIcon, StatusIcon } from "./icons";
+import { QueuedComposerMessages } from "./queued-composer-messages";
 
 interface ComposerSurfaceProps {
   readonly lastError?: string;
@@ -19,6 +20,8 @@ interface ComposerSurfaceProps {
   readonly setComposerDraft: (draft: string) => void;
   readonly composerRef: RefObject<HTMLTextAreaElement | null>;
   readonly attachments: readonly ComposerAttachment[];
+  readonly queuedMessages: readonly import("./desktop-state").QueuedComposerMessage[];
+  readonly editingQueuedMessageId?: string;
   readonly slashSections: readonly ComposerSlashCommandSection[];
   readonly slashOptions: readonly ComposerSlashOption[];
   readonly selectedSlashCommand?: ComposerSlashCommand;
@@ -31,6 +34,10 @@ interface ComposerSurfaceProps {
   readonly onComposerPaste: (event: ClipboardEvent<HTMLDivElement>) => void;
   readonly onComposerDrop: (event: DragEvent<HTMLDivElement>) => void;
   readonly onRemoveAttachment: (attachmentId: string) => void;
+  readonly onEditQueuedMessage: (messageId: string) => void;
+  readonly onCancelQueuedEdit: () => void;
+  readonly onRemoveQueuedMessage: (messageId: string) => void;
+  readonly onSteerQueuedMessage: (messageId: string) => void;
   readonly onSelectSlashCommand: (command: ComposerSlashCommand) => void;
   readonly onSelectSlashOption: (option: ComposerSlashOption) => void;
   readonly showMentionMenu: boolean;
@@ -56,6 +63,8 @@ export function ComposerSurface({
   setComposerDraft,
   composerRef,
   attachments,
+  queuedMessages,
+  editingQueuedMessageId,
   slashSections,
   slashOptions,
   selectedSlashCommand,
@@ -68,6 +77,10 @@ export function ComposerSurface({
   onComposerPaste,
   onComposerDrop,
   onRemoveAttachment,
+  onEditQueuedMessage,
+  onCancelQueuedEdit,
+  onRemoveQueuedMessage,
+  onSteerQueuedMessage,
   onSelectSlashCommand,
   onSelectSlashOption,
   showMentionMenu,
@@ -162,6 +175,14 @@ export function ComposerSurface({
           </button>
         </div>
       ) : null}
+      <QueuedComposerMessages
+        messages={queuedMessages}
+        editingQueuedMessageId={editingQueuedMessageId}
+        onEditMessage={onEditQueuedMessage}
+        onCancelEdit={onCancelQueuedEdit}
+        onRemoveMessage={onRemoveQueuedMessage}
+        onSteerMessage={onSteerQueuedMessage}
+      />
       {attachments.length > 0 ? (
         <div className="composer__attachments">
           {attachments.map((attachment) => (

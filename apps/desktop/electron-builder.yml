@@ -11,10 +11,16 @@ files:
   - out/**/*
   - package.json
 
+extraResources:
+  - from: resources/icon.png
+    to: icon.png
+
 asar: true
 asarUnpack:
   - "**/*.node"
   - "**/*.wasm"
+
+artifactName: ${productName}-${version}-${arch}.${ext}
 
 mac:
   category: public.app-category.developer-tools
@@ -27,6 +33,18 @@ mac:
     - target: zip
       arch: arm64
   darkModeSupport: true
+  extraFiles:
+    - from: build/native/pi-gui-notification-status-helper
+      to: MacOS/pi-gui-notification-status-helper
+
+linux:
+  category: Development
+  executableName: pi-gui
+  target:
+    - target: AppImage
+
+toolsets:
+  appimage: "1.0.2"
 
 dmg:
   contents:

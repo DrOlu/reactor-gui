@@ -45,7 +45,7 @@ export function sectionDescription(section: SettingsSection, workspaceName: stri
     case "models":
       return "Choose the default model and which models appear in pickers.";
     case "notifications":
-      return "Only background sessions should notify by default.";
+      return "Manage both macOS notification access and which background events should alert you.";
     default:
       return "Keep the high-value app and runtime controls close to hand.";
   }

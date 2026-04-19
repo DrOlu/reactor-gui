@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
 import { PRELOAD_DEV_RELOAD_MARKER } from "./dev-reload-preload-probe";
-import { desktopIpc, type PiDesktopCommand } from "../src/ipc";
+import { desktopIpc, type DesktopNotificationPermissionStatus, type PiDesktopCommand } from "../src/ipc";
 import type {
   NavigateSessionTreeOptions,
   NavigateSessionTreeResult,
@@ -161,16 +161,30 @@ contextBridge.exposeInMainWorld("piApp", {
     ipcRenderer.invoke(desktopIpc.respondToHostUiRequest, workspaceId, sessionId, response) as Promise<DesktopAppState>,
   setNotificationPreferences: (preferences: Partial<NotificationPreferences>) =>
     ipcRenderer.invoke(desktopIpc.setNotificationPreferences, preferences) as Promise<DesktopAppState>,
+  getNotificationPermissionStatus: () =>
+    ipcRenderer.invoke(desktopIpc.getNotificationPermissionStatus) as Promise<DesktopNotificationPermissionStatus>,
+  requestNotificationPermission: () =>
+    ipcRenderer.invoke(desktopIpc.requestNotificationPermission) as Promise<DesktopNotificationPermissionStatus>,
+  openSystemNotificationSettings: () =>
+    ipcRenderer.invoke(desktopIpc.openSystemNotificationSettings) as Promise<void>,
   pickComposerAttachments: () => ipcRenderer.invoke(desktopIpc.pickComposerAttachments) as Promise<DesktopAppState>,
   readClipboardImage: () => ipcRenderer.sendSync(desktopIpc.readClipboardImage) as ComposerImageAttachment | null,
   addComposerAttachments: (attachments: readonly ComposerAttachment[]) =>
     ipcRenderer.invoke(desktopIpc.addComposerAttachments, attachments) as Promise<DesktopAppState>,
   removeComposerAttachment: (attachmentId: string) =>
     ipcRenderer.invoke(desktopIpc.removeComposerAttachment, attachmentId) as Promise<DesktopAppState>,
+  editQueuedComposerMessage: (messageId: string, currentDraft?: string) =>
+    ipcRenderer.invoke(desktopIpc.editQueuedComposerMessage, messageId, currentDraft) as Promise<DesktopAppState>,
+  cancelQueuedComposerEdit: () =>
+    ipcRenderer.invoke(desktopIpc.cancelQueuedComposerEdit) as Promise<DesktopAppState>,
+  removeQueuedComposerMessage: (messageId: string) =>
+    ipcRenderer.invoke(desktopIpc.removeQueuedComposerMessage, messageId) as Promise<DesktopAppState>,
+  steerQueuedComposerMessage: (messageId: string) =>
+    ipcRenderer.invoke(desktopIpc.steerQueuedComposerMessage, messageId) as Promise<DesktopAppState>,
   updateComposerDraft: (composerDraft: string) =>
     ipcRenderer.invoke(desktopIpc.updateComposerDraft, composerDraft) as Promise<DesktopAppState>,
-  submitComposer: (text: string) =>
-    ipcRenderer.invoke(desktopIpc.submitComposer, text) as Promise<DesktopAppState>,
+  submitComposer: (text: string, options?: { readonly deliverAs?: "steer" | "followUp" }) =>
+    ipcRenderer.invoke(desktopIpc.submitComposer, text, options) as Promise<DesktopAppState>,
   getSessionTree: (target: WorkspaceSessionTarget) =>
     ipcRenderer.invoke(desktopIpc.getSessionTree, target) as Promise<SessionTreeSnapshot>,
   navigateSessionTree: (target: WorkspaceSessionTarget, targetId: string, options?: NavigateSessionTreeOptions) =>

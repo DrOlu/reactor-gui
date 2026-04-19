@@ -1105,6 +1105,149 @@
   margin-bottom: 10px;
 }
 
+.queued-composer-messages {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.queued-composer-messages__editing {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid #dfe4ee;
+  background: #f7f8fc;
+  color: var(--muted-strong);
+  font-size: 13px;
+  font-weight: 560;
+}
+
+.queued-composer-messages__editing button,
+.queued-composer-message__actions button {
+  border: none;
+  background: transparent;
+  color: var(--muted-soft);
+  font: inherit;
+  cursor: pointer;
+}
+
+.queued-composer-messages__editing button:hover,
+.queued-composer-message__actions button:hover {
+  color: var(--text-strong);
+}
+
+.queued-composer-message {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid #dfe4ee;
+  background: linear-gradient(180deg, #fbfbfd 0%, #f6f7fb 100%);
+}
+
+.queued-composer-message--editing {
+  border-color: #8da0ef;
+  box-shadow: 0 0 0 3px rgba(107, 125, 216, 0.12);
+}
+
+.queued-composer-message__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.queued-composer-message__mode {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.queued-composer-message__mode--followUp {
+  background: rgba(63, 89, 151, 0.1);
+  color: #4f628f;
+}
+
+.queued-composer-message__mode--steer {
+  background: rgba(107, 125, 216, 0.14);
+  color: #4456b7;
+}
+
+.queued-composer-message__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.queued-composer-message__text {
+  color: var(--text-strong);
+  font-size: 14px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.queued-composer-message__attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.queued-composer-attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: min(220px, 100%);
+  padding: 5px 9px 5px 5px;
+  border-radius: 999px;
+  border: 1px solid #dfe4ee;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.queued-composer-attachment__preview {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  object-fit: cover;
+  background: #e8ecf5;
+}
+
+.queued-composer-attachment__icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  color: var(--muted-soft);
+  background: #e8ecf5;
+  flex-shrink: 0;
+}
+
+.queued-composer-attachment__icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.queued-composer-attachment__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 520;
+}
+
 .composer-attachment {
   display: inline-flex;
   align-items: center;
@@ -1775,6 +1918,13 @@
 
 .settings-row__control {
   flex-shrink: 0;
+}
+
+.settings-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .settings-row__value {
@@ -2664,6 +2814,37 @@ mark.thread-find-active {
 :root.dark .composer-attachment {
   border-color: var(--line);
   background: var(--surface-muted);
+}
+
+:root.dark .queued-composer-messages__editing,
+:root.dark .queued-composer-message {
+  border-color: var(--line);
+  background: color-mix(in srgb, var(--surface-muted) 88%, black 12%);
+}
+
+:root.dark .queued-composer-message--editing {
+  border-color: #8fa0ff;
+  box-shadow: 0 0 0 3px rgba(143, 160, 255, 0.14);
+}
+
+:root.dark .queued-composer-message__mode--followUp {
+  background: rgba(140, 162, 233, 0.18);
+  color: #c8d4ff;
+}
+
+:root.dark .queued-composer-message__mode--steer {
+  background: rgba(143, 160, 255, 0.22);
+  color: #d4dcff;
+}
+
+:root.dark .queued-composer-attachment {
+  border-color: var(--line);
+  background: rgba(29, 31, 36, 0.58);
+}
+
+:root.dark .queued-composer-attachment__icon,
+:root.dark .queued-composer-attachment__preview {
+  background: var(--surface);
 }
 
 :root.dark .composer-attachment__icon,

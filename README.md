@@ -8,29 +8,41 @@ This repo packages a desktop UI around `@mariozechner/pi-coding-agent`. It is no
 
 ## Status
 
-- Beta (macOS, arm64)
+- Beta (macOS arm64, Linux AppImage)
 - Public source repo
 
 ## Install
 
 ### From GitHub Releases
 
-Download the latest `.dmg` from [Releases](https://github.com/DrOlu/reactor-gui/releases).
+Download the latest `.dmg` or `.AppImage` from [Releases](https://github.com/DrOlu/reactor-gui/releases).
 
-Signed and notarized beta releases are the intended install path. Older unsigned artifacts may still require the macOS right-click > Open workaround.
+Signed and notarized beta releases are the primary direct install path. Drag `pi-gui.app` into `/Applications`, then launch it normally.
+
+Linux releases ship as AppImages.
+
+To update a DMG install, download the latest release and replace the app in `/Applications`.
 
 ### With Homebrew
 
-Homebrew installation will be published once the first signed release artifacts are available.
+Install from Homebrew:
 
 ```bash
 brew tap hyperspace-technologies/tap
 brew install --cask reactor-gui
 ```
 
+To update a Homebrew install:
+
+```bash
+brew upgrade --cask pi-gui
+```
+
+Homebrew upgrades may behave more like reinstall than in-place patching on macOS. During beta, you may need to re-confirm Dock placement or some permission prompts after upgrading.
+
 ### From Source
 
-See [Development](#development) below.
+See [Development](#development) below. Source install is intended for contributors and local development, not the primary end-user install path.
 
 ## What It Does
 
@@ -50,6 +62,7 @@ On first launch, go to **Settings > Providers** to connect your AI provider via 
 Install dependencies:
 
 ```bash
+corepack enable
 pnpm install
 ```
 
@@ -72,6 +85,12 @@ pnpm test
 ```
 
 Desktop E2E lanes and setup are documented in [`apps/desktop/README.md`](./apps/desktop/README.md). The default desktop test command runs the `core` lane; use `pnpm --filter @pi-gui/desktop run test:e2e:all` when you need `core`, `live`, and `native`.
+
+Package a Linux AppImage locally:
+
+```bash
+pnpm --filter @pi-gui/desktop run package:linux
+```
 
 Production-like packaged-app checks:
 
@@ -104,7 +123,7 @@ pnpm --filter @reactor-gui/desktop demo:readme
 
 - The app currently relies on upstream `pi` behavior and local auth state.
 - Live end-to-end validation may require model credentials not stored in this repo.
-- Package manifests remain `private: true`; this repo is intended for source collaboration first.
+- Homebrew beta upgrades may require macOS to re-confirm some app permissions or Dock placement.
 
 ## Acknowledgements
 

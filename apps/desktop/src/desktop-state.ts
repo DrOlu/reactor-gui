@@ -10,6 +10,13 @@ export type WorktreeStatus = "ready" | "missing" | "error";
 export type NewThreadEnvironment = "local" | "worktree";
 export type ThemeMode = "system" | "light" | "dark";
 export type ModelSettingsScopeMode = "app-global" | "per-repo";
+export type ComposerDraftSyncSource =
+  | "state"
+  | "selection"
+  | "persist"
+  | "command"
+  | "extension-editor-text"
+  | "queued-message-edit";
 
 export interface NotificationPreferences {
   readonly backgroundCompletion: boolean;
@@ -35,6 +42,17 @@ export interface ComposerFileAttachment {
 }
 
 export type ComposerAttachment = ComposerImageAttachment | ComposerFileAttachment;
+
+export type QueuedComposerMessageMode = "steer" | "followUp";
+
+export interface QueuedComposerMessage {
+  readonly id: string;
+  readonly mode: QueuedComposerMessageMode;
+  readonly text: string;
+  readonly attachments: readonly ComposerAttachment[];
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
 
 export interface SessionRecord {
   readonly id: string;
@@ -140,7 +158,11 @@ export interface DesktopAppState {
   readonly selectedSessionId: string;
   readonly activeView: AppView;
   readonly composerDraft: string;
+  readonly composerDraftSyncSource: ComposerDraftSyncSource;
+  readonly composerDraftSyncNonce: number;
   readonly composerAttachments: readonly ComposerAttachment[];
+  readonly queuedComposerMessages: readonly QueuedComposerMessage[];
+  readonly editingQueuedMessageId?: string;
   readonly runtimeByWorkspace: Readonly<Record<string, RuntimeSnapshot>>;
   readonly sessionCommandsBySession: Readonly<Record<string, readonly RuntimeCommandRecord[]>>;
   readonly sessionExtensionUiBySession: Readonly<Record<string, SessionExtensionUiStateRecord>>;
@@ -172,7 +194,10 @@ export function createEmptyDesktopAppState(): DesktopAppState {
     selectedSessionId: "",
     activeView: "threads",
     composerDraft: "",
+    composerDraftSyncSource: "state",
+    composerDraftSyncNonce: 0,
     composerAttachments: [],
+    queuedComposerMessages: [],
     runtimeByWorkspace: {},
     sessionCommandsBySession: {},
     sessionExtensionUiBySession: {},

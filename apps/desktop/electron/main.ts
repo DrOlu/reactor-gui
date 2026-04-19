@@ -1,4 +1,15 @@
-import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, shell, type MenuItemConstructorOptions } from "electron";
+import {
+  app,
+  BrowserWindow,
+  clipboard,
+  dialog,
+  ipcMain,
+  Menu,
+  nativeImage,
+  shell,
+  type MenuItemConstructorOptions,
+  type MessageBoxOptions,
+} from "electron";
 import { randomUUID } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
@@ -8,7 +19,12 @@ import { getChangedFiles, getFileDiff, stageFile } from "./app-store-diff";
 import { listWorkspaceFiles } from "./app-store-files";
 import { MAIN_DEV_RELOAD_MARKER } from "./dev-reload-main-probe";
 import { NotificationManager } from "./notification-manager";
-import { initUpdateChecker } from "./update-checker";
+import {
+  getNotificationPermissionStatus,
+  openSystemNotificationSettings,
+  requestNotificationPermission,
+} from "./notification-permission";
+import { checkForUpdate, initUpdateChecker } from "./update-checker";
 import { ThemeManager } from "./theme-manager";
 import type { DesktopAppState, ThemeMode } from "../src/desktop-state";
 import { desktopIpc, getDesktopCommandFromShortcut } from "../src/ipc";
@@ -33,6 +49,7 @@ const devReloadMarkersEnabled = process.env.PI_APP_DEV_RELOAD_MARKERS === "1";
 let store: DesktopAppStore;
 const themeManager = new ThemeManager();
 let mainWindow: BrowserWindow | null = null;
+let notificationManager: NotificationManager | undefined;
 let stopPublishingState: (() => void) | undefined;
 let stopPublishingSelectedTranscript: (() => void) | undefined;
 let stopNotifications: (() => void) | undefined;
@@ -42,8 +59,20 @@ let quittingAfterStoreFlush = false;
 const SUPPORTED_IMAGE_TYPES = SUPPORTED_COMPOSER_IMAGE_TYPES;
 const SUPPORTED_IMAGE_MIME_TYPES = new Set<string>(SUPPORTED_IMAGE_TYPES.map((type) => type.mimeType));
 const OPEN_FOLDER_MENU_ITEM_ID = "file.open-folder";
+const CHECK_FOR_UPDATES_MENU_ITEM_ID = "app.check-for-updates";
 const MAX_CLIPBOARD_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_CLIPBOARD_IMAGE_DIMENSION = 8_192;
+
+// Resolve the bundled application icon. In dev the repo's `resources/icon.png`
+// sits two levels up from the compiled `out/main/main.js`; in a packaged build
+// it is copied to `process.resourcesPath` via `extraResources` in
+// electron-builder.yml. On macOS packaged builds the window/dock icon already
+// comes from `icon.icns` in the app bundle, so we only need the PNG for dev
+// and for Linux/Windows window chrome.
+const appIconPath = app.isPackaged
+  ? path.join(process.resourcesPath, "icon.png")
+  : path.join(__dirname, "..", "..", "resources", "icon.png");
+const appIcon = nativeImage.createFromPath(appIconPath);
 
 function readClipboardImageAttachment(): ComposerImageAttachment | null {
   const image = clipboard.readImage();
@@ -81,6 +110,7 @@ function createWindow(): BrowserWindow {
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 18, y: 18 },
     show: false,
+    icon: appIcon,
     webPreferences: {
       preload: path.join(__dirname, "..", "preload", "preload.js"),
       contextIsolation: true,
@@ -102,13 +132,14 @@ function createWindow(): BrowserWindow {
     }
 
     const lowerKey = input.key.toLowerCase();
-    if (process.platform === "darwin" && input.meta && !input.shift && lowerKey === "o") {
+    const platformModifier = process.platform === "darwin" ? input.meta : input.control;
+    if (platformModifier && !input.shift && lowerKey === "o") {
       event.preventDefault();
       void pickWorkspaceViaDialog();
       return;
     }
 
-    if ((process.platform === "darwin" ? input.meta : input.control) && !input.shift && lowerKey === "v") {
+    if (platformModifier && !input.shift && lowerKey === "v") {
       const clipboardImage = readClipboardImageAttachment();
       if (clipboardImage) {
         event.preventDefault();
@@ -202,13 +233,71 @@ async function pickWorkspaceViaDialog(): Promise<DesktopAppState> {
   return newThreadState;
 }
 
+async function runManualUpdateCheck(): Promise<void> {
+  const window = mainWindow && canPublishToWindow(mainWindow) ? mainWindow : undefined;
+  const result = await checkForUpdate();
+
+  if (result.status === "update-available") {
+    return;
+  }
+
+  if (result.status === "up-to-date") {
+    const options: MessageBoxOptions = {
+      type: "info",
+      title: "pi-gui",
+      message: `You're up to date on version ${result.currentVersion}.`,
+      buttons: ["OK"],
+    };
+    if (window) {
+      await dialog.showMessageBox(window, options);
+    } else {
+      await dialog.showMessageBox(options);
+    }
+    return;
+  }
+
+  const options: MessageBoxOptions = {
+    type: "warning",
+    title: "pi-gui",
+    message: "Could not check for updates right now.",
+    detail: result.message,
+    buttons: ["OK"],
+  };
+  if (window) {
+    await dialog.showMessageBox(window, options);
+  } else {
+    await dialog.showMessageBox(options);
+  }
+}
+
 function installApplicationMenu(): void {
   if (process.platform !== "darwin") {
     return;
   }
 
   const template: MenuItemConstructorOptions[] = [
-    { role: "appMenu" },
+    {
+      label: app.name,
+      submenu: [
+        { role: "about" },
+        { type: "separator" },
+        {
+          id: CHECK_FOR_UPDATES_MENU_ITEM_ID,
+          label: "Check for Updates…",
+          click: () => {
+            void runManualUpdateCheck();
+          },
+        },
+        { type: "separator" },
+        { role: "services" },
+        { type: "separator" },
+        { role: "hide" },
+        { role: "hideOthers" },
+        { role: "unhide" },
+        { type: "separator" },
+        { role: "quit" },
+      ],
+    },
     {
       label: "File",
       submenu: [
@@ -235,6 +324,13 @@ function installApplicationMenu(): void {
 app.setName("reactor");
 
 app.whenReady().then(async () => {
+  // On macOS, packaged builds already render the dock icon from `icon.icns`
+  // in the app bundle. In dev we override the generic Electron dock icon with
+  // the real PNG so the running app looks right end-to-end.
+  if (process.platform === "darwin" && !app.isPackaged) {
+    app.dock?.setIcon(appIcon);
+  }
+
   const userDataDir = process.env.PI_APP_USER_DATA_DIR?.trim() || app.getPath("userData");
   let generateThreadTitleOverride:
     | ((workspace: WorkspaceRef, options: GenerateThreadTitleOptions) => Promise<string | null | undefined>)
@@ -283,7 +379,8 @@ app.whenReady().then(async () => {
       },
     });
   }
-  stopNotifications = new NotificationManager(store, () => mainWindow).start();
+  notificationManager = new NotificationManager(store, () => mainWindow);
+  stopNotifications = notificationManager.start();
   if (!isDev) {
     stopUpdateChecker = initUpdateChecker();
   }
@@ -382,6 +479,13 @@ app.whenReady().then(async () => {
   ipcMain.handle(desktopIpc.setNotificationPreferences, (_event, preferences) =>
     store.setNotificationPreferences(preferences),
   );
+  ipcMain.handle(desktopIpc.getNotificationPermissionStatus, () =>
+    getNotificationPermissionStatus(mainWindow),
+  );
+  ipcMain.handle(desktopIpc.requestNotificationPermission, () =>
+    requestNotificationPermission(mainWindow),
+  );
+  ipcMain.handle(desktopIpc.openSystemNotificationSettings, () => openSystemNotificationSettings());
   ipcMain.handle(desktopIpc.createSession, (_event, input: CreateSessionInput) =>
     store.createSession(input),
   );
@@ -422,10 +526,25 @@ app.whenReady().then(async () => {
   ipcMain.handle(desktopIpc.removeComposerAttachment, (_event, attachmentId: string) =>
     store.removeComposerAttachment(attachmentId),
   );
+  ipcMain.handle(desktopIpc.editQueuedComposerMessage, (_event, messageId: string, currentDraft?: string) =>
+    store.editQueuedComposerMessage(messageId, currentDraft),
+  );
+  ipcMain.handle(desktopIpc.cancelQueuedComposerEdit, () =>
+    store.cancelQueuedComposerEdit(),
+  );
+  ipcMain.handle(desktopIpc.removeQueuedComposerMessage, (_event, messageId: string) =>
+    store.removeQueuedComposerMessage(messageId),
+  );
+  ipcMain.handle(desktopIpc.steerQueuedComposerMessage, (_event, messageId: string) =>
+    store.steerQueuedComposerMessage(messageId),
+  );
   ipcMain.handle(desktopIpc.updateComposerDraft, (_event, composerDraft: string) =>
     store.updateComposerDraft(composerDraft),
   );
-  ipcMain.handle(desktopIpc.submitComposer, (_event, text: string) => store.submitComposer(text));
+  ipcMain.handle(
+    desktopIpc.submitComposer,
+    (_event, text: string, options?: { readonly deliverAs?: "steer" | "followUp" }) => store.submitComposer(text, options),
+  );
   ipcMain.handle(desktopIpc.getSessionTree, (_event, target: WorkspaceSessionTarget) =>
     store.getSessionTree(target),
   );
@@ -477,12 +596,14 @@ app.whenReady().then(async () => {
   });
 
   mainWindow = createWindow();
+  notificationManager.trackWindow(mainWindow);
   themeManager.setWindow(mainWindow);
   attachStatePublisher(mainWindow);
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       mainWindow = createWindow();
+      notificationManager?.trackWindow(mainWindow);
       themeManager.setWindow(mainWindow);
       attachStatePublisher(mainWindow);
     }
@@ -490,11 +611,12 @@ app.whenReady().then(async () => {
 });
 
 app.on("window-all-closed", () => {
-  stopNotifications?.();
-  stopNotifications = undefined;
-  stopUpdateChecker?.();
-  stopUpdateChecker = undefined;
   if (process.platform !== "darwin") {
+    stopNotifications?.();
+    stopNotifications = undefined;
+    notificationManager = undefined;
+    stopUpdateChecker?.();
+    stopUpdateChecker = undefined;
     app.quit();
   }
 });
@@ -502,6 +624,7 @@ app.on("window-all-closed", () => {
 app.on("before-quit", (event) => {
   stopNotifications?.();
   stopNotifications = undefined;
+  notificationManager = undefined;
   stopUpdateChecker?.();
   stopUpdateChecker = undefined;
   if (quittingAfterStoreFlush || !store) {

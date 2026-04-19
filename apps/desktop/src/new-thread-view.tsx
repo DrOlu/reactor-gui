@@ -162,6 +162,7 @@ export function NewThreadView({
               topNotice={(
                 <ModelOnboardingNoticeBanner notice={modelOnboarding.notice} onOpenSettings={onOpenModelSettings} />
               )}
+              queuedMessages={[]}
               composerDraft={prompt}
               setComposerDraft={onChangePrompt}
               composerRef={composerRef}
@@ -177,6 +178,10 @@ export function NewThreadView({
               onComposerKeyDown={onComposerKeyDown}
               onComposerPaste={onComposerPaste}
               onComposerDrop={onComposerDrop}
+              onEditQueuedMessage={() => undefined}
+              onCancelQueuedEdit={() => undefined}
+              onRemoveQueuedMessage={() => undefined}
+              onSteerQueuedMessage={() => undefined}
               onRemoveAttachment={onRemoveAttachment}
               onSelectSlashCommand={onSelectSlashCommand}
               onSelectSlashOption={onSelectSlashOption}

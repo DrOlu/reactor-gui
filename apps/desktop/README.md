@@ -2,13 +2,14 @@
 
 Codex-style Electron shell for AI coding agents, with Playwright E2E coverage organized by test lane.
 
-macOS is the supported desktop target today. Keep generic repo checks on Linux if useful, but treat macOS as the source of truth for desktop CI and product verification.
+macOS remains the source of truth for desktop UI verification. Linux is supported for packaging and manual validation, with CI packaging checks to catch AppImage regressions.
 
 ## Setup
 
 Install workspace dependencies once:
 
 ```bash
+corepack enable
 pnpm install
 ```
 
@@ -30,6 +31,12 @@ Run the built app locally without packaging:
 
 ```bash
 pnpm --filter @pi-gui/desktop preview
+```
+
+Package a Linux AppImage locally:
+
+```bash
+pnpm --filter @pi-gui/desktop run package:linux
 ```
 
 Live agent tests use your existing `pi` runtime and provider auth. If local `pi` runs do not work, the `live` lane will not be meaningful either.
@@ -83,6 +90,13 @@ For mac-first CI, use:
 pnpm --filter @reactor-gui/desktop run test:e2e:ci:mac
 ```
 
+Linux CI currently validates packaging via:
+
+```bash
+pnpm --filter @pi-gui/desktop run package:linux
+pnpm --dir apps/desktop run verify:packaged-runtime-deps:linux
+```
+
 ## Focus And Foreground Rules
 
 - `core` and most `live` scripts set `PI_APP_TEST_MODE=background` for you. Agents normally should not set that env var manually.
@@ -90,6 +104,21 @@ pnpm --filter @reactor-gui/desktop run test:e2e:ci:mac
 - If a native test fails, rerun it with a clean foreground window before assuming the product is broken.
 - Picker tests rely on macOS Accessibility/UI scripting. If folder or image picker automation cannot type into the dialog, check system Accessibility permissions first.
 - `production` open-panel coverage also relies on macOS Accessibility/UI scripting and should be run with the app kept frontmost.
+
+## Playwright Vs Computer Use
+
+Prefer the repo lanes first. They are deterministic, scriptable, and the right source of truth for normal development and CI.
+
+- Use `core` when the behavior lives inside the Electron window and should stay background-friendly.
+- Use `live` when you need a real run, transcript item, tool call, queued message, or other runtime-backed behavior.
+- Use `native` or `production` when the surface is a real macOS dialog, picker, clipboard path, installed `.app`, or packaged release artifact.
+
+Use manual Computer Use smoke only as a complement, not a replacement.
+
+- If the local Codex skill `$pi-gui-computer-use-smoke` is installed, use it for believable release-readiness sweeps on the installed app and for focus-hostile macOS surfaces that are awkward or disruptive in Playwright.
+- The reason to use Computer Use is product confidence, not determinism. It is useful when you want to see the real installed app behave correctly while minimizing disruption to the laptop.
+- Keep Playwright as the primary regression signal. Computer Use should not replace lane coverage for `core`, `live`, `native`, or `production`, and it should not become a hidden repo dependency.
+- Treat real open-folder and native file-picker checks in Computer Use as best-effort smoke coverage unless the workflow is explicitly being validated there.
 
 ## Targeted Commands
 

@@ -7,6 +7,7 @@ import {
 } from "./site";
 
 const GITHUB_URL = "https://github.com/DrOlu/reactor-gui";
+const RELEASES_URL = "https://github.com/DrOlu/reactor-gui/releases/latest";
 const PI_MONO_URL = "https://github.com/mariozechner/pi";
 
 const softwareApplicationJsonLd = {
@@ -14,7 +15,7 @@ const softwareApplicationJsonLd = {
   "@type": "SoftwareApplication",
   name: SITE_NAME,
   applicationCategory: "DeveloperApplication",
-  operatingSystem: "macOS",
+  operatingSystem: "macOS, Linux",
   description: SITE_DESCRIPTION,
   url: SITE_URL,
   sameAs: [GITHUB_URL],
@@ -129,23 +130,23 @@ export default function Page() {
               AI coding agents
             </h1>
             <p className="hero-subtitle">
-              reactor-gui is a Codex-style macOS desktop app for AI coding agents. Manage workspaces, run sessions, and review agent work — all from a native interface.
+              reactor-gui is a Codex-style macOS and Linux desktop app for AI coding agents. Manage workspaces, run sessions, and review agent work — all from a native interface.
             </p>
             <p className="hero-note">
               {HERO_BETA_NOTE}
             </p>
             <div className="hero-ctas">
               <a
-                href={GITHUB_URL}
+                href={RELEASES_URL}
                 className="btn btn-primary btn-github"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 <GitHubIcon />
-                View on GitHub
+                Download Beta
               </a>
               <a href="#get-started" className="btn btn-secondary">
-                Install from Source
+                Install Options
               </a>
             </div>
           </div>
@@ -288,33 +289,65 @@ export default function Page() {
         <section id="get-started" className="get-started">
           <div className="container">
             <p className="section-eyebrow">Get started</p>
-            <h2 className="section-heading">Run the beta from source</h2>
+            <h2 className="section-heading">Install the beta your way</h2>
             <div className="code-block">
               <code>
-                <span className="code-comment"># Clone the repo</span>
+                <span className="code-comment"># Direct install from GitHub Releases</span>
+                {"\n"}
+                <span className="code-command">open</span>{" "}
+                {RELEASES_URL}
+                {"\n\n"}
+                <span className="code-comment"># Or install with Homebrew</span>
+                {"\n"}
+                <span className="code-command">brew tap</span>{" "}
+                minghinmatthewlam/tap
+                {"\n"}
+                <span className="code-command">brew install --cask</span>{" "}
+                pi-gui
+                {"\n\n"}
+                <span className="code-comment"># Later, update the Homebrew install</span>
+                {"\n"}
+                <span className="code-command">brew upgrade --cask</span>{" "}
+                pi-gui
+                {"\n\n"}
+                <span className="code-comment"># Source install is for local development</span>
                 {"\n"}
                 <span className="code-command">git clone</span>{" "}
                 {GITHUB_URL}.git{"\n"}
                 <span className="code-command">cd</span> reactor-gui{"\n\n"}
-                <span className="code-comment">
-                  # Install dependencies and run
-                </span>
+                <span className="code-comment"># Install dependencies and run</span>
                 {"\n"}
                 <span className="code-command">pnpm install</span>
                 {"\n"}
                 <span className="code-command">pnpm dev</span>
               </code>
             </div>
-            <a
-              href={GITHUB_URL}
-              className="btn btn-primary btn-github"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <GitHubIcon />
-              View on GitHub
-              <ArrowIcon />
-            </a>
+            <p className="section-subtitle">
+              DMG installs update from GitHub Releases. Homebrew installs update
+              with <code>brew upgrade --cask pi-gui</code>. During beta,
+              Homebrew upgrades may require re-confirming some macOS permissions
+              or Dock placement after reinstall-style updates.
+            </p>
+            <div className="hero-ctas">
+              <a
+                href={RELEASES_URL}
+                className="btn btn-primary btn-github"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <GitHubIcon />
+                Open Releases
+                <ArrowIcon />
+              </a>
+              <a
+                href={GITHUB_URL}
+                className="btn btn-secondary"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View Source
+              </a>
+            </div>
           </div>
         </section>
       </main>

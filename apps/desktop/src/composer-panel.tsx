@@ -1,6 +1,6 @@
 import { type ClipboardEvent, type Dispatch, type DragEvent, type KeyboardEvent, type RefObject, type SetStateAction } from "react";
 import type { RuntimeSnapshot } from "@pi-gui/session-driver/runtime-types";
-import type { ComposerAttachment, SessionRecord } from "./desktop-state";
+import type { ComposerAttachment, QueuedComposerMessage, SessionRecord } from "./desktop-state";
 import { ArrowUpIcon, PlusIcon, StopSquareIcon } from "./icons";
 import type {
   ComposerSlashCommand,
@@ -25,6 +25,8 @@ interface ComposerPanelProps {
   readonly composerRef: RefObject<HTMLTextAreaElement | null>;
   readonly runningLabel: string;
   readonly attachments: readonly ComposerAttachment[];
+  readonly queuedMessages: readonly QueuedComposerMessage[];
+  readonly editingQueuedMessageId?: string;
   readonly provider: string | undefined;
   readonly modelId: string | undefined;
   readonly thinkingLevel: string | undefined;
@@ -41,6 +43,10 @@ interface ComposerPanelProps {
   readonly onComposerDrop: (event: DragEvent<HTMLDivElement>) => void;
   readonly onPickAttachments: () => void;
   readonly onRemoveAttachment: (attachmentId: string) => void;
+  readonly onEditQueuedMessage: (messageId: string) => void;
+  readonly onCancelQueuedEdit: () => void;
+  readonly onRemoveQueuedMessage: (messageId: string) => void;
+  readonly onSteerQueuedMessage: (messageId: string) => void;
   readonly onSelectSlashCommand: (command: ComposerSlashCommand) => void;
   readonly onSelectSlashOption: (option: ComposerSlashOption) => void;
   readonly onSetModel: (provider: string, modelId: string) => void;
@@ -68,6 +74,8 @@ export function ComposerPanel({
   composerRef,
   runningLabel,
   attachments,
+  queuedMessages,
+  editingQueuedMessageId,
   provider,
   modelId,
   thinkingLevel,
@@ -84,6 +92,10 @@ export function ComposerPanel({
   onComposerDrop,
   onPickAttachments,
   onRemoveAttachment,
+  onEditQueuedMessage,
+  onCancelQueuedEdit,
+  onRemoveQueuedMessage,
+  onSteerQueuedMessage,
   onSelectSlashCommand,
   onSelectSlashOption,
   onSetModel,
@@ -99,6 +111,9 @@ export function ComposerPanel({
   extensionDockExpanded,
   onToggleExtensionDock,
 }: ComposerPanelProps) {
+  const hasComposerInput = composerDraft.trim().length > 0 || attachments.length > 0;
+  const primaryActionIsStop = selectedSession.status === "running" && !hasComposerInput;
+
   return (
     <footer className="composer">
       <div className="conversation conversation--composer">
@@ -113,6 +128,8 @@ export function ComposerPanel({
           setComposerDraft={setComposerDraft}
           composerRef={composerRef}
           attachments={attachments}
+          queuedMessages={queuedMessages}
+          editingQueuedMessageId={editingQueuedMessageId}
           slashSections={slashSections}
           slashOptions={slashOptions}
           selectedSlashCommand={selectedSlashCommand}
@@ -125,6 +142,10 @@ export function ComposerPanel({
           onComposerPaste={onComposerPaste}
           onComposerDrop={onComposerDrop}
           onRemoveAttachment={onRemoveAttachment}
+          onEditQueuedMessage={onEditQueuedMessage}
+          onCancelQueuedEdit={onCancelQueuedEdit}
+          onRemoveQueuedMessage={onRemoveQueuedMessage}
+          onSteerQueuedMessage={onSteerQueuedMessage}
           onSelectSlashCommand={onSelectSlashCommand}
           onSelectSlashOption={onSelectSlashOption}
           showMentionMenu={showMentionMenu}
@@ -141,7 +162,9 @@ export function ComposerPanel({
             <div className="composer__footer">
               <div className="composer__footer-row">
                 <div className="composer__hint">
-                  {selectedSession.status === "running" ? runningLabel : "Enter to send · Shift+Enter for newline"}
+                  {selectedSession.status === "running"
+                    ? `${runningLabel} · Enter to queue · Cmd+Enter to steer`
+                    : "Enter to send · Shift+Enter for newline"}
                   {" · "}
                   <ModelSelector
                     runtime={runtime}
@@ -161,23 +184,22 @@ export function ComposerPanel({
                     aria-label="Attach files"
                     className="icon-button composer__attach"
                     type="button"
-                    disabled={selectedSession.status === "running"}
                     onClick={onPickAttachments}
                   >
                     <PlusIcon />
                   </button>
                   <button
-                    aria-label={selectedSession.status === "running" ? "Stop run" : "Send message"}
+                    aria-label={primaryActionIsStop ? "Stop run" : "Send message"}
                     className="button button--primary button--cta-icon"
                     data-testid="send"
                     type="button"
                     disabled={
-                      selectedSession.status !== "running" &&
+                      !primaryActionIsStop &&
                       ((!composerDraft.trim() && attachments.length === 0) || modelOnboarding.requiresModelSelection)
                     }
                     onClick={onSubmit}
                   >
-                    {selectedSession.status === "running" ? <StopSquareIcon /> : <ArrowUpIcon />}
+                    {primaryActionIsStop ? <StopSquareIcon /> : <ArrowUpIcon />}
                   </button>
                 </div>
               </div>

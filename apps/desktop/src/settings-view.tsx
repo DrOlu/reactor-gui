@@ -1,5 +1,6 @@
 import type { RuntimeSettingsSnapshot, RuntimeSnapshot } from "@pi-gui/session-driver/runtime-types";
 import type { ModelSettingsScopeMode, NotificationPreferences, WorkspaceRecord } from "./desktop-state";
+import type { DesktopNotificationPermissionStatus } from "./ipc";
 import { SettingsAppearanceSection } from "./settings-appearance-section";
 import { SettingsGeneralSection } from "./settings-general-section";
 import { SettingsModelsSection } from "./settings-models-section";
@@ -14,6 +15,8 @@ interface SettingsViewProps {
   readonly runtime?: RuntimeSnapshot;
   readonly section: SettingsSection;
   readonly notificationPreferences: NotificationPreferences;
+  readonly notificationPermissionStatus: DesktopNotificationPermissionStatus;
+  readonly notificationPermissionPending: boolean;
   readonly modelSettingsScopeMode: ModelSettingsScopeMode;
   readonly themeMode: "system" | "light" | "dark";
   readonly onSetModelSettingsScopeMode: (mode: ModelSettingsScopeMode) => void;
@@ -26,6 +29,8 @@ interface SettingsViewProps {
   readonly onSetProviderApiKey: (providerId: string, apiKey: string) => Promise<string | undefined>;
   readonly onRemoveProviderApiKey: (providerId: string) => Promise<string | undefined>;
   readonly onSetNotificationPreferences: (preferences: Partial<NotificationPreferences>) => void;
+  readonly onRequestNotificationPermission: () => void;
+  readonly onOpenSystemNotificationSettings: () => void;
   readonly onSetThemeMode: (mode: "system" | "light" | "dark") => void;
 }
 
@@ -34,6 +39,8 @@ export function SettingsView({
   runtime,
   section,
   notificationPreferences,
+  notificationPermissionStatus,
+  notificationPermissionPending,
   modelSettingsScopeMode,
   themeMode,
   onSetModelSettingsScopeMode,
@@ -46,6 +53,8 @@ export function SettingsView({
   onSetProviderApiKey,
   onRemoveProviderApiKey,
   onSetNotificationPreferences,
+  onRequestNotificationPermission,
+  onOpenSystemNotificationSettings,
   onSetThemeMode,
 }: SettingsViewProps) {
   if (!workspace && section !== "general" && section !== "notifications" && section !== "appearance") {
@@ -112,7 +121,11 @@ export function SettingsView({
           {section === "notifications" ? (
             <SettingsNotificationsSection
               notificationPreferences={notificationPreferences}
+              notificationPermissionStatus={notificationPermissionStatus}
+              notificationPermissionPending={notificationPermissionPending}
               onSetNotificationPreferences={onSetNotificationPreferences}
+              onRequestNotificationPermission={onRequestNotificationPermission}
+              onOpenSystemNotificationSettings={onOpenSystemNotificationSettings}
             />
           ) : null}
         </div>
