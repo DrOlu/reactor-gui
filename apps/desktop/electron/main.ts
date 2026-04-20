@@ -244,7 +244,7 @@ async function runManualUpdateCheck(): Promise<void> {
   if (result.status === "up-to-date") {
     const options: MessageBoxOptions = {
       type: "info",
-      title: "pi-gui",
+      title: "reactor-gui",
       message: `You're up to date on version ${result.currentVersion}.`,
       buttons: ["OK"],
     };

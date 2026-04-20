@@ -29,6 +29,12 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Build notification status helper (macOS)
+        run: |
+          cd apps/desktop
+          node --experimental-strip-types scripts/build-notification-status-helper.mjs
+          ls -la build/native/ || true
+
       - name: Build
         run: pnpm --filter @pi-gui/desktop run build
 

@@ -20,8 +20,6 @@ asarUnpack:
   - "**/*.node"
   - "**/*.wasm"
 
-artifactName: ${productName}-${version}-${arch}.${ext}
-
 mac:
   category: public.app-category.developer-tools
   hardenedRuntime: false
@@ -34,17 +32,8 @@ mac:
       arch: arm64
   darkModeSupport: true
   extraFiles:
-    - from: build/native/pi-gui-notification-status-helper
-      to: MacOS/pi-gui-notification-status-helper
-
-linux:
-  category: Development
-  executableName: pi-gui
-  target:
-    - target: AppImage
-
-toolsets:
-  appimage: "1.0.2"
+    - from: build/native/reactor-gui-notification-status-helper
+      to: MacOS/reactor-gui-notification-status-helper
 
 dmg:
   contents:
@@ -78,6 +67,7 @@ portable:
 
 linux:
   icon: resources/icon.png
+  executableName: reactor-gui
   target:
     - target: AppImage
       arch: x64
@@ -85,6 +75,9 @@ linux:
       arch: x64
   artifactName: "${productName}-${version}-${arch}.${ext}"
   category: Development
+
+toolsets:
+  appimage: "1.0.2"
 
 publish:
   provider: github

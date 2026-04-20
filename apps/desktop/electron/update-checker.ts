@@ -15,7 +15,7 @@ export type UpdateCheckResult =
 
 function showUpdateNotification(currentVersion: string, latestVersion: string): void {
   const notification = new Notification({
-    title: "pi-gui Release Available",
+    title: "reactor-gui Release Available",
     body: `Version ${latestVersion} is available (you have ${currentVersion}). Click to view the release.`,
   });
   notification.on("click", () => {
