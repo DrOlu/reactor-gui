@@ -1,0 +1,7 @@
+# Merge strategy: always keep our versions for branding-critical files
+# These files are maintained by reactor-gui and should never be overwritten by upstream
+.github/workflows/release.yml merge=ours
+apps/desktop/resources/icon.icns merge=ours
+apps/desktop/resources/icon.ico merge=ours
+apps/desktop/resources/icon.png merge=ours
+apps/website/public/icon.svg merge=ours

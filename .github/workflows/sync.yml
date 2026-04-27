@@ -1,0 +1,120 @@
+name: Sync upstream and release
+
+on:
+  schedule:
+    # Run daily at 02:00 UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run — merge and patch but do not push or tag"
+        required: false
+        default: "false"
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout reactor-gui
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "Hyperspace Technologies"
+          git config user.email "reactor@hyperspace.ng"
+          # Register the 'ours' merge driver so .gitattributes works
+          git config merge.ours.driver true
+
+      - name: Add upstream remote and fetch
+        run: |
+          git remote add upstream https://github.com/minghinmatthewlam/pi-gui.git
+          git fetch upstream main
+
+      - name: Check for new upstream commits
+        id: check
+        run: |
+          NEW=$(git log --oneline HEAD..upstream/main | wc -l | tr -d ' ')
+          echo "new_commits=$NEW" >> "$GITHUB_OUTPUT"
+          echo "Upstream has $NEW new commit(s) since last sync."
+          if [ "$NEW" = "0" ]; then
+            echo "Nothing to sync."
+          fi
+
+      - name: Merge upstream/main
+        if: steps.check.outputs.new_commits != '0'
+        run: |
+          git merge upstream/main \
+            --no-edit \
+            -m "chore: sync with upstream pi-gui" \
+            --allow-unrelated-histories || true
+          # Abort if unresolvable conflicts remain
+          if git ls-files --unmerged | grep -q .; then
+            echo "::error::Unresolvable merge conflicts detected:"
+            git ls-files --unmerged | awk '{print $4}' | sort -u
+            git merge --abort
+            exit 1
+          fi
+
+      - name: Apply branding patches
+        if: steps.check.outputs.new_commits != '0'
+        run: node scripts/apply-branding.mjs
+
+      - name: Stage branding fixes
+        if: steps.check.outputs.new_commits != '0'
+        run: |
+          git add -A
+          # Only amend if there are branding changes on top of the merge commit
+          if ! git diff --cached --quiet; then
+            git commit --amend --no-edit
+          fi
+
+      - name: Compute next version tag
+        if: steps.check.outputs.new_commits != '0'
+        id: version
+        run: |
+          # Get the latest vX.Y.Z tag (ignore beta/alpha/rc)
+          LATEST=$(git tag --list 'v[0-9]*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          if [ -z "$LATEST" ]; then
+            NEXT="v0.1.0"
+          else
+            # Increment patch version
+            BASE="${LATEST#v}"
+            MAJOR=$(echo "$BASE" | cut -d. -f1)
+            MINOR=$(echo "$BASE" | cut -d. -f2)
+            PATCH=$(echo "$BASE" | cut -d. -f3)
+            NEXT="v${MAJOR}.${MINOR}.$((PATCH + 1))"
+          fi
+          echo "next_tag=$NEXT" >> "$GITHUB_OUTPUT"
+          echo "Next release tag: $NEXT"
+
+      - name: Push merged main
+        if: steps.check.outputs.new_commits != '0' && inputs.dry_run != 'true'
+        run: git push origin main
+
+      - name: Tag and push release
+        if: steps.check.outputs.new_commits != '0' && inputs.dry_run != 'true'
+        run: |
+          git tag ${{ steps.version.outputs.next_tag }}
+          git push origin ${{ steps.version.outputs.next_tag }}
+
+      - name: Summary
+        run: |
+          NEW="${{ steps.check.outputs.new_commits }}"
+          TAG="${{ steps.version.outputs.next_tag }}"
+          DRY="${{ inputs.dry_run }}"
+          if [ "$NEW" = "0" ]; then
+            echo "### No new upstream commits — nothing to do." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$DRY" = "true" ]; then
+            echo "### Dry run complete — $NEW upstream commit(s) merged and patched, tag $TAG would be created." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### Synced $NEW upstream commit(s) and released $TAG" >> "$GITHUB_STEP_SUMMARY"
+            echo "Release: https://github.com/DrOlu/reactor-gui/releases/tag/$TAG" >> "$GITHUB_STEP_SUMMARY"
+          fi
