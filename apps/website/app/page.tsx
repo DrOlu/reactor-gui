@@ -176,7 +176,7 @@ export default function Page() {
         <section className="value-prop">
           <div className="container container--narrow">
             <p>
-              From quick fixes to complex refactors, pi-gui gives you a
+              From quick fixes to complex refactors, reactor-gui gives you a
               persistent desktop workspace for AI-powered coding sessions —
               with full visibility into what the agent is doing and why.
             </p>
@@ -300,15 +300,15 @@ export default function Page() {
                 <span className="code-comment"># Or install with Homebrew</span>
                 {"\n"}
                 <span className="code-command">brew tap</span>{" "}
-                minghinmatthewlam/tap
+                hyperspace-technologies/tap
                 {"\n"}
                 <span className="code-command">brew install --cask</span>{" "}
-                pi-gui
+                reactor-gui
                 {"\n\n"}
                 <span className="code-comment"># Later, update the Homebrew install</span>
                 {"\n"}
                 <span className="code-command">brew upgrade --cask</span>{" "}
-                pi-gui
+                reactor-gui
                 {"\n\n"}
                 <span className="code-comment"># Source install is for local development</span>
                 {"\n"}
@@ -324,7 +324,7 @@ export default function Page() {
             </div>
             <p className="section-subtitle">
               DMG installs update from GitHub Releases. Homebrew installs update
-              with <code>brew upgrade --cask pi-gui</code>. During beta,
+              with <code>brew upgrade --cask reactor-gui</code>. During beta,
               Homebrew upgrades may require re-confirming some macOS permissions
               or Dock placement after reinstall-style updates.
             </p>

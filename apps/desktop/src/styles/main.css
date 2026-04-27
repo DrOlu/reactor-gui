@@ -16,6 +16,7 @@
   grid-template-rows: auto 1fr auto;
   min-width: 0;
   overflow: hidden;
+  position: relative;
 }
 
 .main--with-diff {
@@ -108,11 +109,62 @@
   -webkit-app-region: no-drag;
 }
 
+.topbar__tooltip-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
 .topbar__icon {
   width: 30px;
   height: 30px;
   border-radius: 10px;
   color: var(--muted-soft);
+}
+
+.topbar__tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-2px);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: max-content;
+  padding: 6px 9px;
+  border: 1px solid #dde3ef;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 10px 28px rgba(20, 27, 45, 0.12);
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 520;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.topbar__tooltip kbd {
+  min-width: 28px;
+  padding: 1px 5px 2px;
+  border: 1px solid #dce2ee;
+  border-radius: 5px;
+  background: #f7f9fc;
+  color: #526078;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.topbar__tooltip-wrap:hover .topbar__tooltip,
+.topbar__tooltip-wrap:focus-within .topbar__tooltip {
+  opacity: 1;
+  transform: translateX(-50%);
 }
 
 .canvas {
@@ -610,6 +662,177 @@
   border-bottom: 1px solid var(--border);
   max-height: 200px;
   overflow-y: auto;
+}
+
+/* Integrated terminal */
+
+.terminal-panel {
+  grid-column: 1;
+  min-height: 220px;
+  max-height: calc(100vh - 140px);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border-top: 1px solid #2a2e3a;
+  background: #0f1117;
+  color: #d7dae0;
+  overflow: hidden;
+  position: relative;
+  z-index: 8;
+}
+
+.terminal-panel--takeover {
+  grid-row: 2 / -1;
+  height: auto;
+  max-height: none;
+  z-index: 20;
+}
+
+.terminal-panel__resize-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  cursor: ns-resize;
+  z-index: 2;
+}
+
+.terminal-panel__toolbar {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 8px 5px 10px;
+  border-bottom: 1px solid #242936;
+  background: #171a22;
+}
+
+.terminal-panel__tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.terminal-panel__tab-item {
+  min-width: 112px;
+  max-width: 220px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 4px 0 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #aeb6c6;
+}
+
+.terminal-panel__tab {
+  min-width: 0;
+  flex: 1 1 auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 560;
+}
+
+.terminal-panel__tab-item--active {
+  border-color: #343b4c;
+  background: #202532;
+  color: #f2f4f8;
+}
+
+.terminal-panel__tab-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terminal-panel__tab-close {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #8791a4;
+}
+
+.terminal-panel__tab-close svg {
+  width: 13px;
+  height: 13px;
+}
+
+.terminal-panel__tab-close:hover {
+  background: #303747;
+  color: #fff;
+}
+
+.terminal-panel__status {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #45bd6f;
+}
+
+.terminal-panel__status--exited {
+  background: #a0a7b4;
+}
+
+.terminal-panel__status--error {
+  background: #f87171;
+}
+
+.terminal-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.terminal-panel__action {
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #aeb6c6;
+}
+
+.terminal-panel__action:hover {
+  border-color: #343b4c;
+  background: #202532;
+  color: #fff;
+}
+
+.terminal-panel__viewport {
+  min-height: 0;
+  padding: 8px 10px;
+  overflow: hidden;
+}
+
+.terminal-panel__viewport .xterm {
+  height: 100%;
+}
+
+.terminal-panel__error {
+  padding: 18px;
+  color: #fecaca;
+  font: 12px Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  white-space: pre-wrap;
 }
 
 .diff-panel__file {
@@ -1160,36 +1383,18 @@
   gap: 12px;
 }
 
-.queued-composer-message__mode {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 9px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-.queued-composer-message__mode--followUp {
-  background: rgba(63, 89, 151, 0.1);
-  color: #4f628f;
-}
-
-.queued-composer-message__mode--steer {
-  background: rgba(107, 125, 216, 0.14);
-  color: #4456b7;
-}
-
 .queued-composer-message__actions {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
   justify-content: flex-end;
 }
 
 .queued-composer-message__text {
+  min-width: 0;
+  flex: 1;
   color: var(--text-strong);
   font-size: 14px;
   line-height: 1.45;
@@ -1959,7 +2164,8 @@
 }
 
 .settings-select,
-.settings-search {
+.settings-search,
+.settings-text-input {
   width: min(420px, 100%);
   min-height: 40px;
   padding: 10px 12px;
@@ -2827,16 +3033,6 @@ mark.thread-find-active {
   box-shadow: 0 0 0 3px rgba(143, 160, 255, 0.14);
 }
 
-:root.dark .queued-composer-message__mode--followUp {
-  background: rgba(140, 162, 233, 0.18);
-  color: #c8d4ff;
-}
-
-:root.dark .queued-composer-message__mode--steer {
-  background: rgba(143, 160, 255, 0.22);
-  color: #d4dcff;
-}
-
 :root.dark .queued-composer-attachment {
   border-color: var(--line);
   background: rgba(29, 31, 36, 0.58);
@@ -2931,7 +3127,8 @@ mark.thread-find-active {
 }
 
 :root.dark .settings-select,
-:root.dark .settings-search {
+:root.dark .settings-search,
+:root.dark .settings-text-input {
   border-color: var(--line);
   background: var(--surface);
 }

@@ -2,11 +2,11 @@ import { Notification, type BrowserWindow } from "electron";
 import { appendFile, mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { DesktopAppStore } from "./app-store";
+import type { NotificationPermissionService } from "./notification-permission";
 import type { DesktopAppState } from "../src/desktop-state";
 import { sessionKey } from "@pi-gui/pi-sdk-driver";
 import type { SessionDriverEvent, SessionRef } from "@pi-gui/session-driver";
 import { getSelectedSession } from "../src/desktop-state";
-import { ensureNotificationPermission } from "./notification-permission";
 import { isSessionActivelyViewed } from "./session-visibility";
 
 export class NotificationManager {
@@ -22,6 +22,7 @@ export class NotificationManager {
   constructor(
     private readonly store: DesktopAppStore,
     private readonly getWindow: () => BrowserWindow | null,
+    private readonly notificationPermissionService: NotificationPermissionService,
   ) {}
 
   start(): () => void {
@@ -225,7 +226,7 @@ export class NotificationManager {
 
     this.permissionRequestPending = true;
     try {
-      await ensureNotificationPermission(window);
+      await this.notificationPermissionService.ensurePermission();
     } finally {
       this.backgroundCandidateSessions = [];
       this.permissionRequestPending = false;

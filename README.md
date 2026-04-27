@@ -35,7 +35,7 @@ brew install --cask reactor-gui
 To update a Homebrew install:
 
 ```bash
-brew upgrade --cask pi-gui
+brew upgrade --cask reactor-gui
 ```
 
 Homebrew upgrades may behave more like reinstall than in-place patching on macOS. During beta, you may need to re-confirm Dock placement or some permission prompts after upgrading.

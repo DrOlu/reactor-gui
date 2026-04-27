@@ -1,6 +1,6 @@
 import type { MouseEvent as ReactMouseEvent, Dispatch, SetStateAction } from "react";
 import type { AppView, DesktopAppState, SessionRecord, WorkspaceRecord, WorktreeRecord } from "./desktop-state";
-import { DiffIcon, FolderIcon } from "./icons";
+import { DiffIcon, FolderIcon, TerminalIcon } from "./icons";
 import type { PiDesktopApi } from "./ipc";
 import type { WorkspaceMenuState } from "./hooks/use-workspace-menu";
 
@@ -21,6 +21,9 @@ interface TopbarProps {
     setSnapshot: Dispatch<SetStateAction<DesktopAppState | null>>,
     action: () => Promise<DesktopAppState>,
   ) => Promise<DesktopAppState>;
+  readonly terminalAvailable: boolean;
+  readonly terminalVisible: boolean;
+  readonly onToggleTerminal: () => void;
   readonly showDiffPanel: boolean;
   readonly onToggleDiffPanel: () => void;
 }
@@ -39,9 +42,13 @@ export function Topbar(props: TopbarProps) {
     api,
     setSnapshot,
     updateSnapshot,
+    terminalAvailable,
+    terminalVisible,
+    onToggleTerminal,
     showDiffPanel,
     onToggleDiffPanel,
   } = props;
+  const terminalShortcut = api.platform === "darwin" ? "⌘J" : "Ctrl+J";
 
   const handleDoubleClick = (event: ReactMouseEvent<HTMLElement>) => {
     const target = event.target;
@@ -125,6 +132,21 @@ export function Topbar(props: TopbarProps) {
       </div>
 
       <div className="topbar__actions">
+        <div className="topbar__tooltip-wrap">
+          <button
+            aria-label="Toggle terminal"
+            className={`icon-button topbar__icon ${terminalVisible ? "icon-button--active" : ""}`}
+            type="button"
+            disabled={!terminalAvailable}
+            onClick={onToggleTerminal}
+          >
+            <TerminalIcon />
+          </button>
+          <span className="topbar__tooltip" role="tooltip">
+            <span>Toggle terminal</span>
+            <kbd>{terminalShortcut}</kbd>
+          </span>
+        </div>
         <button
           aria-label="Toggle diff panel"
           className={`icon-button topbar__icon ${showDiffPanel ? "icon-button--active" : ""}`}

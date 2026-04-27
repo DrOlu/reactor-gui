@@ -18,6 +18,7 @@ interface SettingsViewProps {
   readonly notificationPermissionStatus: DesktopNotificationPermissionStatus;
   readonly notificationPermissionPending: boolean;
   readonly modelSettingsScopeMode: ModelSettingsScopeMode;
+  readonly integratedTerminalShell: string;
   readonly themeMode: "system" | "light" | "dark";
   readonly onSetModelSettingsScopeMode: (mode: ModelSettingsScopeMode) => void;
   readonly onSetDefaultModel: (provider: string, modelId: string) => void;
@@ -29,6 +30,7 @@ interface SettingsViewProps {
   readonly onSetProviderApiKey: (providerId: string, apiKey: string) => Promise<string | undefined>;
   readonly onRemoveProviderApiKey: (providerId: string) => Promise<string | undefined>;
   readonly onSetNotificationPreferences: (preferences: Partial<NotificationPreferences>) => void;
+  readonly onSetIntegratedTerminalShell: (shellPath: string) => void;
   readonly onRequestNotificationPermission: () => void;
   readonly onOpenSystemNotificationSettings: () => void;
   readonly onSetThemeMode: (mode: "system" | "light" | "dark") => void;
@@ -42,6 +44,7 @@ export function SettingsView({
   notificationPermissionStatus,
   notificationPermissionPending,
   modelSettingsScopeMode,
+  integratedTerminalShell,
   themeMode,
   onSetModelSettingsScopeMode,
   onSetDefaultModel,
@@ -53,6 +56,7 @@ export function SettingsView({
   onSetProviderApiKey,
   onRemoveProviderApiKey,
   onSetNotificationPreferences,
+  onSetIntegratedTerminalShell,
   onRequestNotificationPermission,
   onOpenSystemNotificationSettings,
   onSetThemeMode,
@@ -94,7 +98,9 @@ export function SettingsView({
             <SettingsGeneralSection
               runtime={runtime}
               modelSettingsScopeMode={modelSettingsScopeMode}
+              integratedTerminalShell={integratedTerminalShell}
               onSetModelSettingsScopeMode={onSetModelSettingsScopeMode}
+              onSetIntegratedTerminalShell={onSetIntegratedTerminalShell}
               onToggleSkillCommands={onToggleSkillCommands}
             />
           ) : null}

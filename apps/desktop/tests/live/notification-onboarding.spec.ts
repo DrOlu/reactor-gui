@@ -96,12 +96,13 @@ test("requests notification permission when the user minimizes a running session
 
   try {
     const window = await harness.firstWindow();
-    await harness.focusWindow();
+    await setSessionVisibilityOverride(harness, "active");
     const session = await createThread(window, "Onboarding Minimize Session");
     await selectSessionByTitle(window, "Onboarding Minimize Session");
     await emitRunningEvent(harness, session, "Minimize");
 
     await expect.poll(() => readOptionalLog(requestLogPath), { timeout: 5_000 }).toBe("");
+    await setSessionVisibilityOverride(harness, null);
     await harness.electronApp.evaluate(({ BrowserWindow }) => {
       const appWindow = BrowserWindow.getAllWindows()[0];
       appWindow?.minimize();

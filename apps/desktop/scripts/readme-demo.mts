@@ -20,8 +20,8 @@ const repoRoot = path.resolve(scriptDir, "../../..");
 const outputDir = path.join(repoRoot, "docs", "readme");
 
 async function main(): Promise<void> {
-  const userDataDir = await mkdtemp(path.join(tmpdir(), "pi-gui-demo-user-data-"));
-  const framesDir = await mkdtemp(path.join(tmpdir(), "pi-gui-demo-frames-"));
+  const userDataDir = await mkdtemp(path.join(tmpdir(), "reactor-gui-demo-user-data-"));
+  const framesDir = await mkdtemp(path.join(tmpdir(), "reactor-gui-demo-frames-"));
   const workspacePath = await makeWorkspace("acme-web");
 
   await mkdir(outputDir, { recursive: true });

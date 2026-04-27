@@ -21,7 +21,9 @@ export function SettingsNotificationsSection({
 }: SettingsNotificationsSectionProps) {
   const statusLabel = labelForPermissionStatus(notificationPermissionStatus);
   const statusDescription = descriptionForPermissionStatus(notificationPermissionStatus);
-  const showRecoveryActions = notificationPermissionStatus !== "granted";
+  const showAskMacOs = notificationPermissionStatus === "default";
+  const showOpenSystemSettings = notificationPermissionStatus === "denied";
+  const showRecoveryActions = showAskMacOs || showOpenSystemSettings;
 
   return (
     <>
@@ -32,25 +34,33 @@ export function SettingsNotificationsSection({
         {showRecoveryActions ? (
           <SettingsRow
             title="Turn on notifications"
-            description="pi-gui asks macOS when active work first moves into the background. You can also ask now, or open System Settings if notifications were already denied."
+            description={
+              showAskMacOs
+                ? "pi-gui asks macOS when active work first moves into the background. You can also ask now."
+                : "macOS notifications are already turned off for pi-gui. Open System Settings to enable them again."
+            }
           >
             <div className="settings-row__actions">
-              <button
-                className="button button--secondary"
-                disabled={notificationPermissionPending}
-                type="button"
-                onClick={onRequestNotificationPermission}
-              >
-                Ask macOS
-              </button>
-              <button
-                className="button button--secondary"
-                disabled={notificationPermissionPending}
-                type="button"
-                onClick={onOpenSystemNotificationSettings}
-              >
-                Open System Settings
-              </button>
+              {showAskMacOs ? (
+                <button
+                  className="button button--secondary"
+                  disabled={notificationPermissionPending}
+                  type="button"
+                  onClick={onRequestNotificationPermission}
+                >
+                  Ask macOS
+                </button>
+              ) : null}
+              {showOpenSystemSettings ? (
+                <button
+                  className="button button--secondary"
+                  disabled={notificationPermissionPending}
+                  type="button"
+                  onClick={onOpenSystemNotificationSettings}
+                >
+                  Open System Settings
+                </button>
+              ) : null}
             </div>
           </SettingsRow>
         ) : null}
